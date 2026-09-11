@@ -1,0 +1,64 @@
+{
+  "_comment": "別のセットを計算するときはこれをコピーして数値を埋める。各項目の意味はREADME.mdを参照。",
+
+  "set_name": "拡張パック「○○」",
+  "set_code": "M0",
+  "release_date": "2026-01-01",
+  "packs_per_box": 30,
+  "cards_per_pack": 5,
+  "msrp_box_jpy": 6000,
+
+  "box_price_jpy": {
+    "kaitori": 0,
+    "hanbai": 0
+  },
+  "bulk_per_box_jpy": {
+    "kaitori": 100,
+    "hanbai": 300
+  },
+
+  "slots": [
+    {
+      "_comment": "1BOXに1〜2枚の当たり枠。中身がMUR/SAR/SRに分岐する例。",
+      "name": "SR以上枠",
+      "count": { "type": "discrete", "values": { "1": 0.65, "2": 0.35 } },
+      "outcomes": [
+        { "rarity": "MUR", "p": 0.0148 },
+        { "rarity": "SAR", "p": 0.2089 },
+        { "rarity": "SR", "p": 0.7763 }
+      ]
+    },
+    {
+      "_comment": "枚数が確定している枠は fixed を使う。",
+      "name": "AR枠",
+      "count": { "type": "fixed", "n": 3 },
+      "outcomes": [{ "rarity": "AR", "p": 1.0 }]
+    },
+    {
+      "_comment": "「Nボックスに1枚」のような枠は bernoulli を使う。p = 1/N。",
+      "name": "特別枠",
+      "count": { "type": "bernoulli", "p": 0.02 },
+      "outcomes": [{ "rarity": "UR", "p": 1.0 }]
+    }
+  ],
+
+  "cards": {
+    "MUR": [{ "name": "カード名", "count": 1, "price": { "kaitori": 0, "hanbai": 0 } }],
+    "SAR": [
+      { "name": "カード名", "count": 1, "price": { "kaitori": 0, "hanbai": 0 } },
+      {
+        "_comment": "相場が分からないカードは count でまとめ、estimated を立てておく。",
+        "name": "その他SAR",
+        "count": 5,
+        "price": { "kaitori": 0, "hanbai": 0 },
+        "estimated": true
+      }
+    ],
+    "SR": [{ "name": "その他SR", "count": 18, "price": { "kaitori": 0, "hanbai": 0 } }],
+    "AR": [{ "name": "その他AR", "count": 12, "price": { "kaitori": 0, "hanbai": 0 } }],
+    "UR": [{ "name": "カード名", "count": 1, "price": { "kaitori": 0, "hanbai": 0 } }]
+  },
+
+  "notes": ["この数値をどこから取ったか、何を仮定したかをここに書く。"],
+  "sources": []
+}
