@@ -80,6 +80,23 @@ def _print_ev(box: BoxSet, res: EVResult) -> None:
     print()
 
 
+def _print_cards(box: BoxSet, mode: str) -> None:
+    """カード単位の相場を出典・取得日つきで並べる。数値の監査用。"""
+    print(f"── 相場の内訳（{_MODE_LABEL[mode]}）──")
+    for rarity in box.rarities():
+        print(f"  [{rarity}]")
+        for g in box.cards[rarity]:
+            kinds = f"×{g.count}" if g.count > 1 else "  "
+            mark = "≈" if g.estimated else " "
+            date = g.date or "-"
+            print(
+                f"    {mark}{_ljust(g.name, 30)}{kinds}"
+                f"{_rjust(_yen(g.price(mode)), 11)}  {_ljust(date, 11)}{g.source}"
+            )
+    print("  ≈ は相場を取得できず推定で埋めた項目")
+    print()
+
+
 def _print_sim(box: BoxSet, sim: SimResult) -> None:
     print(f"  開封シミュレーション（{sim.trials:,}BOX）")
     print(f"    平均       {_yen(sim.mean)}")
@@ -144,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--box-price", type=float, help="BOX価格を上書きする")
     parser.add_argument("--trials", type=int, default=200_000, help="シミュレーション回数（0で省略）")
     parser.add_argument("--seed", type=int, default=0, help="乱数シード")
+    parser.add_argument("--cards", action="store_true", help="カード単位の相場を出典つきで表示する")
     parser.add_argument("--json", action="store_true", help="結果をJSONで出力する")
     args = parser.parse_args(argv)
 
@@ -168,6 +186,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.json:
             payload.append(_as_dict(box, res, sim))
         else:
+            if args.cards:
+                _print_cards(box, mode)
             _print_ev(box, res)
             if sim is not None:
                 _print_sim(box, sim)

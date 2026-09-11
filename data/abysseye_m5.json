@@ -42,58 +42,99 @@
       {
         "name": "メガダークライex",
         "count": 1,
-        "price": { "kaitori": 51000, "hanbai": 93000 },
-        "source": "PRICE BASE情報局 (2026-09時点)"
+        "price": { "kaitori": 45500, "hanbai": 93000 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising 45,000 / @Machi_Modi 46,000 の平均。販売はPRICE BASE 2026-09"
       }
     ],
     "SAR": [
       {
         "name": "メガダークライex",
         "count": 1,
-        "price": { "kaitori": 22000, "hanbai": 42725 },
-        "source": "ポケカチ / スニダン (2026-09-01時点)"
+        "price": { "kaitori": 31750, "hanbai": 42725 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising 30,000 / @Machi_Modi 33,500 の平均。9月の集計サイトは22,000でさらに下落"
       },
       {
         "name": "ムク",
         "count": 1,
-        "price": { "kaitori": 3300, "hanbai": 22800 },
-        "source": "PRICE BASE情報局 (2026-08-23時点)"
+        "price": { "kaitori": 4200, "hanbai": 22800 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising。販売22,800はPRICE BASE 2026-08-23（買取との開きが異常に大きく要検証）"
       },
       {
-        "name": "その他SAR（相場未取得ぶん）",
-        "count": 4,
-        "price": { "kaitori": 1500, "hanbai": 4000 },
-        "estimated": true,
-        "source": "推定値。同世代の非目玉SARの一般的な水準から仮置き"
+        "name": "モルペコex",
+        "count": 1,
+        "price": { "kaitori": 3000, "hanbai": 6600 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising。販売は買取×2.2で推定"
+      },
+      {
+        "name": "メガゼラオラex",
+        "count": 1,
+        "price": { "kaitori": 2350, "hanbai": 5170 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising 2,200 / @Machi_Modi 2,500 の平均。販売は買取×2.2で推定"
+      },
+      {
+        "name": "メガシャンデラex",
+        "count": 1,
+        "price": { "kaitori": 1650, "hanbai": 3630 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising 1,600 / @Machi_Modi 1,700 の平均。販売は買取×2.2で推定"
+      },
+      {
+        "name": "グラジオの決戦",
+        "count": 1,
+        "price": { "kaitori": 900, "hanbai": 1980 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising。販売は買取×2.2で推定"
       }
     ],
     "SR": [
       {
+        "name": "カスミの元気",
+        "count": 1,
+        "price": { "kaitori": 1500, "hanbai": 3300 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising。販売は買取×2.2で推定"
+      },
+      {
         "name": "ムク",
         "count": 1,
-        "price": { "kaitori": 1080, "hanbai": 1800 },
-        "source": "PRICE BASE情報局 (2026-09時点)"
+        "price": { "kaitori": 1100, "hanbai": 2420 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising。販売は買取×2.2で推定"
       },
       {
         "name": "メガダークライex",
         "count": 1,
-        "price": { "kaitori": 800, "hanbai": 1800 },
-        "estimated": true,
-        "source": "推定値。プレイ需要ありと報じられているが実額未取得"
+        "price": { "kaitori": 600, "hanbai": 1320 },
+        "date": "2026-07-13",
+        "source": "X: @toreca_rising。販売は買取×2.2で推定"
       },
       {
-        "name": "カスミの元気",
+        "name": "グラジオの決戦",
         "count": 1,
-        "price": { "kaitori": 700, "hanbai": 1500 },
+        "price": { "kaitori": 250, "hanbai": 550 },
+        "date": "2026-05-22",
         "estimated": true,
-        "source": "推定値。当たり枠と報じられているが実額未取得"
+        "source": "X: @DCentGame 600 / @cardrush_poke 800（初動）。7月水準まで下落したものとして推定"
       },
       {
-        "name": "その他SR（相場未取得ぶん）",
-        "count": 15,
-        "price": { "kaitori": 250, "hanbai": 600 },
+        "name": "サビ組のしたっぱ",
+        "count": 1,
+        "price": { "kaitori": 150, "hanbai": 330 },
+        "date": "2026-05-22",
         "estimated": true,
-        "source": "推定値"
+        "source": "X: @DCentGame 200（初動）。下落を見込んで推定"
+      },
+      {
+        "name": "その他SR（13種・相場未取得）",
+        "count": 13,
+        "price": { "kaitori": 150, "hanbai": 330 },
+        "estimated": true,
+        "source": "推定値。ショップ買取表に個別掲載されない水準のSR"
       }
     ],
     "AR": [
@@ -101,38 +142,50 @@
         "name": "ヤドラン",
         "count": 1,
         "price": { "kaitori": 422, "hanbai": 1565 },
-        "source": "AR最高額 (2026-09時点)"
+        "date": "2026-09",
+        "source": "AR最高額。集計サイト"
       },
       {
         "name": "トサキント",
         "count": 1,
         "price": { "kaitori": 165, "hanbai": 620 },
-        "source": "2026-09時点"
+        "date": "2026-09",
+        "source": "集計サイト"
       },
       {
         "name": "フォクスライ",
         "count": 1,
         "price": { "kaitori": 125, "hanbai": 385 },
-        "source": "2026-09時点"
+        "date": "2026-09",
+        "source": "集計サイト"
       },
       {
-        "name": "その他AR（相場未取得ぶん）",
+        "name": "その他AR（9種・相場未取得）",
         "count": 9,
         "price": { "kaitori": 150, "hanbai": 500 },
         "estimated": true,
-        "source": "推定値"
+        "source": "推定値。カリキリ / グレンアルマ / アシレーヌ / ライボルト / ダダリン / ザルード / トリデプス / ドデカバシ / シルヴァディ（X: @pokecamatomeru で全12種の名称は確認済み）"
       }
     ],
     "RR": [
       {
+        "name": "メガドリュウズex",
+        "count": 1,
+        "price": { "kaitori": 60, "hanbai": 200 },
+        "date": "2026-05-28",
+        "estimated": true,
+        "source": "X: @ds_akiba_ekimae 200（初動）。下落を見込んで推定"
+      },
+      {
         "name": "メガダークライex",
         "count": 1,
         "price": { "kaitori": 50, "hanbai": 112 },
-        "source": "ポケカチ 平均値段112円 / 買取30円未満 (2026-08-13時点)"
+        "date": "2026-08-13",
+        "source": "集計サイト。平均販売112円 / 買取30円未満"
       },
       {
-        "name": "その他RR（相場未取得ぶん）",
-        "count": 7,
+        "name": "その他RR（6種・相場未取得）",
+        "count": 6,
         "price": { "kaitori": 40, "hanbai": 100 },
         "estimated": true,
         "source": "推定値"
@@ -141,24 +194,29 @@
   },
 
   "notes": [
+    "買取価格は X（Twitter）のショップ買取表ツイートを一次情報として採用した。ツイートIDから復元した投稿日時は @Machi_Modi 2026-07-11 / @toreca_rising 2026-07-13。",
+    "SAR全6種（メガダークライex / ムク / モルペコex / メガゼラオラex / メガシャンデラex / グラジオの決戦）は @toreca_rising の買取表に全て掲載されており、重複する4種は @Machi_Modi と±10%以内で一致している。",
+    "買取データは2026年7月時点であり、本計算時点（2026年9月）より約2か月古い。集計サイトの9月値ではメガダークライex SARが22,000円（7月比-30%）まで下落しているため、実際の期待値はここで出る数字よりさらに低い可能性が高い。",
+    "販売価格は出典があるもの（MUR / メガダークライexSAR / ムクSAR / AR3種 / メガダークライexRR）以外、買取×2.2で推定している。",
+    "ムクSARは買取4,200円に対し販売22,800円と開きが異常に大きい。販売側の数値が古いか外れ値の可能性があり、hanbaiモードの結果はこの1枚に強く影響される。",
     "封入率はメーカー非公表。以下はすべて開封報告ベースの推定値である。",
-    "収録種類数: MUR 1種 / SAR 6種 / SR 18種 / AR 12種 / RR 8種。",
-    "枠の根拠: 1BOXでRR約4枚・AR3枚・SR以上1〜2枚という開封傾向の報告。",
-    "SR以上枠の中身の内訳は、MUR=50BOXに1枚(0.02枚/BOX)、SAR=狙いの1種が約4.7%×6種(0.282枚/BOX)から逆算。残りをSRに割り当てている。",
-    "SR以上枠の枚数分布 1枚65% / 2枚35% は平均1.35枚になるよう仮置きしたもの。実測ではない。",
-    "estimated: true のカードは相場を取得できず推定で埋めたもの。ここが期待値に効くので、実額が分かり次第差し替えること。",
-    "kaitori（買取）は実際に換金できる額、hanbai（販売）は市場で買うときの額。両者は2倍前後開くため、どちらで評価するかで結論が変わる。",
-    "同一BOX内の重複は考慮していない（復元抽出）。1BOXあたりの枚数が種類数に比べて十分少ないため影響は小さい。",
-    "相場は日々動く。この数値は2026年9月上旬時点のスナップショット。"
+    "収録種類数: MUR 1種 / SAR 6種 / SR 18種 / AR 12種 / RR 8種（X: @pokeka_atari_jp, @PokeGetInfoMain）。",
+    "枠の根拠は「1BOXでRR約4枚・AR3枚・SR以上1〜2枚」という開封傾向の報告。",
+    "SR以上枠の内訳は、MUR=50BOXに1枚(0.02枚/BOX)、SAR=狙いの1種が約4.7%×6種(0.282枚/BOX)から逆算し、残りをSRに割り当てた。",
+    "SR以上枠の枚数分布 1枚65% / 2枚35% は平均1.35枚になるよう仮置きしたもので、実測ではない。MEGA期には「3枚箱」パターンの存在が報告されている（X: @carton_knight の120BOX開封、@yuzup0nyuzup0n）が、数値は取得できなかった。",
+    "同一BOX内の重複は考慮していない（復元抽出）。1BOXあたりの枚数が種類数に比べて十分少ないため影響は小さい。"
   ],
 
   "sources": [
-    "https://snkrdunk.com/articles/29151/",
-    "https://premium.gamepedia.jp/pokeca/archives/22318",
-    "https://torecamap.co.jp/column/m3a/",
-    "https://pokeka-atari.jp/expansion/abyss-eye",
-    "https://altema.jp/pokemoncard/abysseye",
-    "https://price-base.com/useful/abysseye-box-market",
-    "https://price-base.com/useful/megadarkrai-mur-abysseye-market"
+    "https://x.com/toreca_rising/status/2076538536778739977",
+    "https://x.com/Machi_Modi/status/2075773936181399706",
+    "https://x.com/DCentGame/status/2057700265797759440",
+    "https://x.com/cardrush_poke/status/2057669038571188286",
+    "https://x.com/ds_akiba_ekimae/status/2059846460003221956",
+    "https://x.com/pokeka_atari_jp/status/2057401018300658002",
+    "https://x.com/pokecamatomeru/status/2057612840903831819",
+    "https://x.com/PokeGetInfoMain/status/2055156271624737087",
+    "https://x.com/PokeGetInfoMain/status/2057582777407836480",
+    "https://x.com/carton_knight/status/2057476551445565470"
   ]
 }

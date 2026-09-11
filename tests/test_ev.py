@@ -172,6 +172,37 @@ def test_bundled_dataset_pull_rates_match_reported_figures() -> None:
     assert total == pytest.approx(1.35, abs=0.001)
 
 
+def test_bundled_dataset_sar_lineup_is_fully_itemised() -> None:
+    """SAR6種はショップ買取表から全て個別に取れているので、まとめ枠が残っていないこと。
+
+    期待値の大半をSARが占めるため、ここに「その他N種（推定）」が混ざると
+    結果の信頼性が大きく落ちる。
+    """
+    box = load_set(ABYSSEYE)
+    sar = box.cards["SAR"]
+    assert len(sar) == 6
+    assert all(g.count == 1 for g in sar)
+    assert not any(g.estimated for g in sar)
+    assert {g.name for g in sar} == {
+        "メガダークライex",
+        "ムク",
+        "モルペコex",
+        "メガゼラオラex",
+        "メガシャンデラex",
+        "グラジオの決戦",
+    }
+
+
+def test_bundled_dataset_every_card_group_is_attributed() -> None:
+    """出典なしの数値が紛れ込んでいないこと。"""
+    box = load_set(ABYSSEYE)
+    for rarity, groups in box.cards.items():
+        for g in groups:
+            assert g.source, f"{rarity} / {g.name} に source がありません"
+            if not g.estimated:
+                assert g.date, f"{rarity} / {g.name} は実測値なのに date がありません"
+
+
 def test_bundled_dataset_is_negative_ev_in_both_modes() -> None:
     """定価割れではなく、BOX相場が期待値を上回っていることの回帰テスト。"""
     box = load_set(ABYSSEYE)

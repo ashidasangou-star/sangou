@@ -36,6 +36,7 @@ class CardGroup:
     prices: dict[str, float]
     estimated: bool = False
     source: str = ""
+    date: str = ""
 
     def price(self, mode: str) -> float:
         return self.prices[mode]
@@ -208,6 +209,7 @@ def load_set(path: str | Path) -> BoxSet:
                     prices=_parse_prices(_require(g, "price", gw), gw),
                     estimated=bool(g.get("estimated", False)),
                     source=g.get("source", ""),
+                    date=g.get("date", ""),
                 )
             )
         cards[rarity] = tuple(parsed_groups)
