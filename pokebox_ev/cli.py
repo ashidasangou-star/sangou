@@ -9,7 +9,7 @@ import unicodedata
 from datetime import date
 from pathlib import Path
 
-from . import history
+from . import boxprice, history
 from .ev import EVResult, compute_ev
 from .model import PRICE_MODES, BoxSet, DataError, load_set
 from .simulate import SimResult, simulate
@@ -301,6 +301,166 @@ def _cmd_trend(box: BoxSet, args: argparse.Namespace) -> int:
     return 0
 
 
+# ---- BOX買取価格 -----------------------------------------------------
+
+
+def _cond_label(c: str) -> str:
+    return boxprice.CONDITIONS.get(c, c)
+
+
+def _cmd_box_add(args: argparse.Namespace) -> int:
+    """買取表から読み取ったBOX買取額を記録する。"""
+    aliases = boxprice.Aliases.load(args.aliases)
+    on = args.date or date.today().isoformat()
+
+    rows, bad = [], []
+    for item in args.price:
+        try:
+            ident, raw = item.rsplit("=", 1)
+            name, _, condition = ident.partition("/")
+            condition = condition or "shrink"
+            if condition not in boxprice.CONDITIONS:
+                raise ValueError(f"状態は {'/'.join(boxprice.CONDITIONS)} のいずれか")
+            price = boxprice.parse_price(raw)
+            set_name = aliases.resolve(name.strip(), allow_new=args.new)
+        except (ValueError, boxprice.AliasError) as exc:
+            bad.append(f"{item}: {exc}")
+            continue
+        rows.append(
+            boxprice.BoxPrice(
+                date=on,
+                set_name=set_name,
+                condition=condition,
+                price=price,
+                shop=args.shop,
+                source=args.source,
+                note=args.note,
+            )
+        )
+
+    if bad:
+        for b in bad:
+            print(f"エラー: {b}", file=sys.stderr)
+        return 1
+
+    existing = boxprice.load(args.box_prices)
+    if args.source and args.source in boxprice.sources(existing) and not args.force:
+        print(
+            f"出典 '{args.source}' は取り込み済みです。再取り込みするなら --force。",
+            file=sys.stderr,
+        )
+        return 1
+
+    n = boxprice.append(args.box_prices, rows)
+    if args.new:
+        aliases.save(args.aliases)
+    print(f"{args.box_prices} に {on} 時点の {n} 件を記録しました。")
+
+    prev = [d for d in boxprice.dates(existing) if d < on]
+    if prev:
+        _print_box_changes(boxprice.changes(existing + rows, prev[-1], on), prev[-1], on)
+    return 0
+
+
+def _print_box_changes(rows: list[boxprice.BoxChange], frm: str, to: str) -> None:
+    if not rows:
+        print(f"  {frm} → {to}: 買取価格の変動はありません。")
+        return
+    print(f"\n── BOX買取の変動 {frm} → {to} ──")
+    for c in rows:
+        arrow = "↑" if c.diff > 0 else "↓"
+        label = f"{c.set_name}（{_cond_label(c.condition)}）"
+        print(
+            f"  {arrow} {_ljust(label, 34)}"
+            f"{_rjust(_yen(c.old), 10)} → {_rjust(_yen(c.new), 10)}"
+            f"{_rjust(f'{c.ratio:+.1%}', 9)}"
+        )
+    print()
+
+
+def _cmd_box_list(args: argparse.Namespace) -> int:
+    """指定日時点の全セットの買取額を一覧する。"""
+    rows = boxprice.load(args.box_prices)
+    if not rows:
+        print(f"{args.box_prices} に記録がありません。", file=sys.stderr)
+        return 1
+
+    on = args.date or date.today().isoformat()
+    table = boxprice.snapshot_table(rows, on)
+    print(f"■ BOX買取価格  {on} 時点（{len(table)}件）")
+    print(_ljust("セット", 26) + _ljust("状態", 16) + _rjust("買取", 10) + "  " + _ljust("観測日", 14) + "店")
+    for r in table:
+        # その日の観測でなければ、持ち越しと分かるよう括弧を付ける。
+        shown = r.date if r.date == on else f"({r.date})"
+        print(
+            _ljust(r.set_name, 26)
+            + _ljust(_cond_label(r.condition), 16)
+            + _rjust(_yen(r.price), 10)
+            + "  "
+            + _ljust(shown, 14)
+            + r.shop
+        )
+    return 0
+
+
+def _cmd_box_trend(args: argparse.Namespace) -> int:
+    """BOX買取額の推移を出す。"""
+    rows = boxprice.load(args.box_prices)
+    if not rows:
+        print(f"{args.box_prices} に記録がありません。", file=sys.stderr)
+        return 1
+
+    targets = [args.set] if args.set else boxprice.sets(rows)
+    for set_name in targets:
+        keys = sorted({r.key() for r in rows if r.set_name == set_name})
+        if not keys:
+            print(f"'{set_name}' の記録がありません。", file=sys.stderr)
+            return 1
+        print(f"\n■ {set_name}")
+        for key in keys:
+            s = boxprice.series(rows, *key)
+            if len(s) < 2 and not args.all:
+                continue
+            print(f"  [{_cond_label(key[1])} / {key[2]}]")
+            prev = None
+            for r in s:
+                delta = "-" if prev is None else f"{r.price - prev:+,.0f}円"
+                print(f"    {_ljust(r.date, 14)}{_rjust(_yen(r.price), 10)}{_rjust(delta, 11)}")
+                prev = r.price
+
+    all_dates = boxprice.dates(rows)
+    if len(all_dates) >= 2:
+        _print_box_changes(boxprice.changes(rows, all_dates[-2], all_dates[-1]), *all_dates[-2:])
+    return 0
+
+
+def _cmd_box_pending(args: argparse.Namespace) -> int:
+    """未取り込みの買取表画像を一覧する。
+
+    観測の source に画像のファイル名を入れているので、まだ source に
+    現れていない画像が未処理ぶん。別途の状態ファイルを持たずに済む。
+    """
+    inbox = Path(args.inbox)
+    if not inbox.exists():
+        print(f"{inbox} がありません。買取表の画像をここに置いてください。")
+        return 0
+
+    done = boxprice.sources(boxprice.load(args.box_prices))
+    images = sorted(
+        p for p in inbox.iterdir() if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+    )
+    pending = [p for p in images if p.name not in done]
+
+    if not pending:
+        print(f"未処理の画像はありません。（{inbox} に {len(images)}枚、全て取り込み済み）")
+        return 0
+
+    print(f"未処理の画像 {len(pending)}枚:")
+    for p in pending:
+        print(f"  {p}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="pokebox-ev",
@@ -353,7 +513,64 @@ def main(argv: list[str] | None = None) -> int:
     p_tr = sub.add_parser("trend", help="履歴からBOX期待値の推移を出す")
     add_common(p_tr)
 
+    # ---- BOX買取価格（セット定義に依存しない） ----
+    def add_box_common(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "--box-prices",
+            type=Path,
+            default=Path("data/box_prices.jsonl"),
+            help="BOX買取価格の記録ファイル",
+        )
+        p.add_argument(
+            "--aliases",
+            type=Path,
+            default=Path("data/set_aliases.json"),
+            help="セット名の表記ゆれ対応表",
+        )
+
+    p_ba = sub.add_parser("box-add", help="買取表から読み取ったBOX買取額を記録する")
+    add_box_common(p_ba)
+    p_ba.add_argument(
+        "--price",
+        action="append",
+        required=True,
+        metavar="セット名[/状態]=価格",
+        help="例: --price 'アビスアイ/shrink=7000'。状態の既定は shrink",
+    )
+    p_ba.add_argument("--shop", default="トレカマサイ", help="買取店名")
+    p_ba.add_argument("--source", default="", help="出典。画像ファイル名かツイートURL")
+    p_ba.add_argument("--date", help="記録日 (YYYY-MM-DD)。既定は今日")
+    p_ba.add_argument("--note", default="", help="備考")
+    p_ba.add_argument("--new", action="store_true", help="未知のセット名を新規として登録する")
+    p_ba.add_argument("--force", action="store_true", help="同じ出典を再取り込みする")
+
+    p_bl = sub.add_parser("box-list", help="指定日時点の全セットの買取額を一覧する")
+    add_box_common(p_bl)
+    p_bl.add_argument("--date", help="基準日 (YYYY-MM-DD)。既定は今日")
+
+    p_bt = sub.add_parser("box-trend", help="BOX買取額の推移を出す")
+    add_box_common(p_bt)
+    p_bt.add_argument("--set", help="セット名。省略すると全セット")
+    p_bt.add_argument("--all", action="store_true", help="記録が1件だけの系列も表示する")
+
+    p_bp = sub.add_parser("box-pending", help="未取り込みの買取表画像を一覧する")
+    add_box_common(p_bp)
+    p_bp.add_argument("--inbox", type=Path, default=Path("data/inbox"), help="画像の置き場")
+
     args = parser.parse_args(argv)
+
+    box_handlers = {
+        "box-add": _cmd_box_add,
+        "box-list": _cmd_box_list,
+        "box-trend": _cmd_box_trend,
+        "box-pending": _cmd_box_pending,
+    }
+    if args.command in box_handlers:
+        try:
+            return box_handlers[args.command](args)
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"エラー: {exc}", file=sys.stderr)
+            return 1
 
     try:
         box = load_set(args.dataset)

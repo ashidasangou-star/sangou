@@ -74,15 +74,58 @@ python3 -m pokebox_ev trend data/abysseye_m5.json --mode kaitori
 観測が無い日は直近の値を持ち越す（forward fill）。毎日すべてのカードの
 情報が出るわけではないため、これがないと系列が穴だらけになる。
 
+## BOX 買取価格を毎日追う
+
+期待値計算（カード単位）とは別系統で、`data/box_prices.jsonl` に
+BOX の買取額をセット × 状態 × 店ごとに追記する。
+
+### 毎日の流れ
+
+1. トレカマサイ（[@ttt_kaitori](https://x.com/ttt_kaitori)）の買取表画像を
+   `data/inbox/YYYY-MM-DD_ttt_kaitori.jpg` として置き、コミットする
+2. 画像から数値を読み取って `box-add` で記録する
+3. `box-trend` で前日比が出る
+
+```bash
+python3 -m pokebox_ev box-pending          # 未取り込みの画像を確認
+python3 -m pokebox_ev box-add --date 2026-09-11 \
+  --source '2026-09-11_ttt_kaitori.jpg' \
+  --price 'アビスアイ/shrink=7000' \
+  --price 'アビスアイ/noshrink=6300' \
+  --price 'テラスタルフェス/carton=283000'
+python3 -m pokebox_ev box-list             # 今日時点の全セット一覧
+python3 -m pokebox_ev box-trend            # 推移と前日比
+```
+
+状態は `shrink`（シュリンク付き・既定）/ `noshrink` / `carton` / `other`。
+同じセットでも状態と店が違えば別系列として持つ。
+
+### 表記ゆれ対策
+
+この用途で一番壊れやすいのは、同じセットが別表記で別系列に割れることだ
+（アビスアイ / M5 / アビス）。`data/set_aliases.json` で正規名に寄せ、
+**未知の名前は黙って通さない**。新しいセットは `--new` で明示的に登録する。
+
+```bash
+python3 -m pokebox_ev box-add --new --price '30th CELEBRATION/shrink=8000'
+```
+
+### 二重取り込みの防止
+
+観測の `source` に画像のファイル名を入れているので、`box-pending` は
+まだ `source` に現れていない画像を未処理として出す。別の状態ファイルを
+持たずに済むが、**取り込み後も画像は消さないこと**。
+
 ### 自動収集の現状
 
-**このリポジトリには自動収集は入っていない。** 実行環境の
+実行環境の
 [ネットワークポリシー](https://code.claude.com/docs/en/claude-code-on-the-web)
 が x.com・cardrush-pokemon.jp・yuyu-tei.jp・snkrdunk.com を含む
-カード関連サイトを全て遮断しているため、現状の取り込み口は `add` の手入力だけ。
+カード関連サイトを全て遮断しているため、**買取表を自動で取りに行くことはできない。**
+ツイートの画像を URL から取得する手段がなく、Web 検索が返すのは本文テキストのみ。
 
-とくに**買取表の画像は読めない**。画像は取得も OCR もできず、
-Web 検索が返すのはツイートの本文テキストのみ。
+そのため入力は `data/inbox/` に置かれた画像を読む方式にしている。
+画像さえ置かれていれば、その先（読み取り・記録・前日比の算出）は自動で回る。
 
 ## 計算モデル
 
