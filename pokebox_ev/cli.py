@@ -6,8 +6,10 @@ import argparse
 import json
 import sys
 import unicodedata
+from datetime import date
 from pathlib import Path
 
+from . import history
 from .ev import EVResult, compute_ev
 from .model import PRICE_MODES, BoxSet, DataError, load_set
 from .simulate import SimResult, simulate
@@ -146,31 +148,7 @@ def _as_dict(box: BoxSet, res: EVResult, sim: SimResult | None) -> dict:
     return out
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        prog="pokebox-ev",
-        description="ポケモンカードBOXの開封期待値を計算する",
-    )
-    parser.add_argument("dataset", type=Path, help="セット定義JSONのパス")
-    parser.add_argument(
-        "--mode",
-        choices=[*PRICE_MODES, "both"],
-        default="both",
-        help="kaitori=買取価格ベース / hanbai=販売価格ベース / both=両方（既定）",
-    )
-    parser.add_argument("--box-price", type=float, help="BOX価格を上書きする")
-    parser.add_argument("--trials", type=int, default=200_000, help="シミュレーション回数（0で省略）")
-    parser.add_argument("--seed", type=int, default=0, help="乱数シード")
-    parser.add_argument("--cards", action="store_true", help="カード単位の相場を出典つきで表示する")
-    parser.add_argument("--json", action="store_true", help="結果をJSONで出力する")
-    args = parser.parse_args(argv)
-
-    try:
-        box = load_set(args.dataset)
-    except (OSError, json.JSONDecodeError, DataError) as exc:
-        print(f"エラー: {exc}", file=sys.stderr)
-        return 1
-
+def _cmd_ev(box: BoxSet, args: argparse.Namespace) -> int:
     if args.box_price is not None:
         box.box_price_jpy = {m: args.box_price for m in PRICE_MODES}
 
@@ -201,6 +179,190 @@ def main(argv: list[str] | None = None) -> int:
         print()
 
     return 0
+
+
+def _cmd_record(box: BoxSet, args: argparse.Namespace) -> int:
+    """現在のセット定義の相場を、その日の観測として履歴に追記する。"""
+    path = history.history_path(args.history, box.set_code)
+    on = args.date or date.today().isoformat()
+
+    existing = history.load(path)
+    if any(o.date == on for o in existing) and not args.force:
+        print(f"{on} の記録は既にあります。上書きするなら --force を付けてください。", file=sys.stderr)
+        return 1
+
+    obs = history.snapshot(box, on=on)
+    n = history.append(path, obs)
+    print(f"{path} に {on} 時点の {n} 件を記録しました。")
+
+    prev = [d for d in history.dates(existing) if d < on]
+    if prev:
+        _print_changes(history.changes(existing + obs, prev[-1], on, args.mode), prev[-1], on)
+    return 0
+
+
+def _print_changes(rows: list[history.Change], frm: str, to: str) -> None:
+    if not rows:
+        print(f"  {frm} → {to}: 相場の変動はありません。")
+        return
+    print(f"\n── 相場の変動 {frm} → {to} ──")
+    for c in rows:
+        arrow = "↑" if c.diff > 0 else "↓"
+        print(
+            f"  {arrow} {_ljust(f'[{c.rarity}] {c.card}', 32)}"
+            f"{_rjust(_yen(c.old), 11)} → {_rjust(_yen(c.new), 11)}"
+            f"{_rjust(f'{c.ratio:+.1%}', 9)}"
+        )
+    print()
+
+
+def _cmd_add(box: BoxSet, args: argparse.Namespace) -> int:
+    """個別のカード相場を履歴に追記する。
+
+    買取表から読み取った値を入れる口。`レアリティ/カード名=価格` の形で渡す。
+    """
+    path = history.history_path(args.history, box.set_code)
+    on = args.date or date.today().isoformat()
+
+    known = {(r, g.name) for r, gs in box.cards.items() for g in gs}
+    obs, bad = [], []
+    for item in args.price:
+        try:
+            ident, raw = item.rsplit("=", 1)
+            rarity, card = ident.split("/", 1)
+            price = float(raw.replace(",", "").replace("円", "").strip())
+        except ValueError:
+            bad.append(f"{item}: 形式は レアリティ/カード名=価格")
+            continue
+        rarity, card = rarity.strip(), card.strip()
+        if (rarity, card) not in known:
+            bad.append(f"{item}: {rarity}/{card} はセット定義にありません")
+            continue
+        obs.append(
+            history.Observation(
+                date=on,
+                set_code=box.set_code,
+                rarity=rarity,
+                card=card,
+                mode=args.price_mode,
+                price=price,
+                source=args.source,
+                quoted_at=args.quoted_at or on,
+            )
+        )
+
+    if bad:
+        for b in bad:
+            print(f"エラー: {b}", file=sys.stderr)
+        return 1
+
+    n = history.append(path, obs)
+    print(f"{path} に {on} 時点の {n} 件を追記しました。")
+
+    prev = [d for d in history.dates(history.load(path)) if d < on]
+    if prev:
+        _print_changes(
+            history.changes(history.load(path), prev[-1], on, args.price_mode), prev[-1], on
+        )
+    return 0
+
+
+def _cmd_trend(box: BoxSet, args: argparse.Namespace) -> int:
+    """履歴からBOX期待値の推移を出す。"""
+    path = history.history_path(args.history, box.set_code)
+    obs = history.load(path)
+    if not obs:
+        print(f"{path} に記録がありません。先に record を実行してください。", file=sys.stderr)
+        return 1
+
+    all_dates = history.dates(obs)
+    modes = list(PRICE_MODES) if args.mode == "both" else [args.mode]
+
+    print(f"■ {box.set_name}  [{box.set_code}]  記録 {len(all_dates)}日分")
+    for mode in modes:
+        print(f"\n── BOX期待値の推移（{_MODE_LABEL[mode]}）──")
+        print(_ljust("日付", 14) + _rjust("BOX期待値", 13) + _rjust("前回比", 11) + _rjust("還元率", 10))
+        prev_ev = None
+        for d in all_dates:
+            snap = history.with_prices(box, history.prices_on(obs, d))
+            res = compute_ev(snap, mode)
+            delta = "-" if prev_ev is None else f"{res.ev_box - prev_ev:+,.0f}円"
+            print(
+                _ljust(d, 14)
+                + _rjust(_yen(res.ev_box), 13)
+                + _rjust(delta, 11)
+                + _rjust(f"{res.roi:.1%}", 10)
+            )
+            prev_ev = res.ev_box
+
+    if len(all_dates) >= 2:
+        target = args.mode if args.mode != "both" else PRICE_MODES[0]
+        _print_changes(history.changes(obs, all_dates[-2], all_dates[-1], target), *all_dates[-2:])
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="pokebox-ev",
+        description="ポケモンカードBOXの開封期待値を計算し、相場の推移を記録する",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    def add_common(p: argparse.ArgumentParser) -> None:
+        p.add_argument("dataset", type=Path, help="セット定義JSONのパス")
+        p.add_argument(
+            "--mode",
+            choices=[*PRICE_MODES, "both"],
+            default="both",
+            help="kaitori=買取価格ベース / hanbai=販売価格ベース / both=両方（既定）",
+        )
+        p.add_argument(
+            "--history",
+            type=Path,
+            default=Path("data/history"),
+            help="相場履歴の保存先ディレクトリ",
+        )
+
+    p_ev = sub.add_parser("ev", help="期待値を計算する")
+    add_common(p_ev)
+    p_ev.add_argument("--box-price", type=float, help="BOX価格を上書きする")
+    p_ev.add_argument("--trials", type=int, default=200_000, help="シミュレーション回数（0で省略）")
+    p_ev.add_argument("--seed", type=int, default=0, help="乱数シード")
+    p_ev.add_argument("--cards", action="store_true", help="カード単位の相場を出典つきで表示する")
+    p_ev.add_argument("--json", action="store_true", help="結果をJSONで出力する")
+
+    p_rec = sub.add_parser("record", help="現在の相場をその日の観測として履歴に追記する")
+    add_common(p_rec)
+    p_rec.add_argument("--date", help="記録日 (YYYY-MM-DD)。既定は今日")
+    p_rec.add_argument("--force", action="store_true", help="同じ日の記録が既にあっても追記する")
+
+    p_add = sub.add_parser("add", help="買取表から読み取った相場を1枚単位で履歴に追記する")
+    add_common(p_add)
+    p_add.add_argument(
+        "--price",
+        action="append",
+        required=True,
+        metavar="レアリティ/カード名=価格",
+        help="例: --price 'SAR/メガダークライex=22000'（複数指定可）",
+    )
+    p_add.add_argument("--price-mode", choices=PRICE_MODES, default="kaitori", help="買取か販売か")
+    p_add.add_argument("--source", default="", help="出典（ツイートURLなど）")
+    p_add.add_argument("--quoted-at", help="その価格が出た日。既定は記録日と同じ")
+    p_add.add_argument("--date", help="記録日 (YYYY-MM-DD)。既定は今日")
+
+    p_tr = sub.add_parser("trend", help="履歴からBOX期待値の推移を出す")
+    add_common(p_tr)
+
+    args = parser.parse_args(argv)
+
+    try:
+        box = load_set(args.dataset)
+    except (OSError, json.JSONDecodeError, DataError) as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 1
+
+    handlers = {"ev": _cmd_ev, "record": _cmd_record, "add": _cmd_add, "trend": _cmd_trend}
+    return handlers[args.command](box, args)
 
 
 if __name__ == "__main__":

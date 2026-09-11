@@ -13,10 +13,13 @@
 依存ライブラリなし（Python 3.10+）。
 
 ```bash
-python3 -m pokebox_ev data/abysseye_m5.json
+python3 -m pokebox_ev ev     data/abysseye_m5.json   # 期待値を計算
+python3 -m pokebox_ev record data/abysseye_m5.json   # 今日の相場を履歴に記録
+python3 -m pokebox_ev add    data/abysseye_m5.json --price 'SAR/ムク=3300'  # 1枚だけ更新
+python3 -m pokebox_ev trend  data/abysseye_m5.json   # 期待値の推移を見る
 ```
 
-主なオプション:
+`ev` の主なオプション:
 
 | オプション | 説明 |
 | --- | --- |
@@ -33,6 +36,53 @@ python3 -m pokebox_ev data/abysseye_m5.json
 2 倍前後ひらく。開封したカードを換金するつもりなら **買取**、
 手元に残す価値を見るなら **販売** で評価する。世に出回っている
 「BOX 期待値◯◯円」は多くが販売価格ベースなので、換金目的で読むと過大評価になる。
+
+## 相場の推移を記録する
+
+`data/history/<set_code>.jsonl` に **1 行 1 観測の追記専用**で貯める。
+過去の記録は書き換えないので、あとから出典を検証できる。
+
+```bash
+# セット定義の相場をまるごと今日の観測として記録
+python3 -m pokebox_ev record data/abysseye_m5.json
+
+# 買取表から読んだ値を1枚ずつ入れる（こちらが日々の更新で使う口）
+python3 -m pokebox_ev add data/abysseye_m5.json --date 2026-09-11 \
+  --price 'SAR/メガダークライex=22000' \
+  --price 'SAR/ムク=3300' \
+  --source 'https://x.com/ttt_kaitori/status/...'
+```
+
+`add` は入力時にカード名をセット定義と照合するので、打ち間違いは弾かれる。
+
+```bash
+python3 -m pokebox_ev trend data/abysseye_m5.json --mode kaitori
+```
+
+```
+── BOX期待値の推移（買取価格ベース）──
+日付              BOX期待値     前回比    還元率
+2026-07-13          4,084円          -     58.2%
+2026-09-11          3,693円     -391円     52.6%
+
+── 相場の変動 2026-07-13 → 2026-09-11 ──
+  ↓ [SAR] メガダークライex             31,750円 →    22,000円   -30.7%
+  ↑ [MUR] メガダークライex             45,500円 →    51,000円   +12.1%
+  ↓ [SAR] ムク                          4,200円 →     3,300円   -21.4%
+```
+
+観測が無い日は直近の値を持ち越す（forward fill）。毎日すべてのカードの
+情報が出るわけではないため、これがないと系列が穴だらけになる。
+
+### 自動収集の現状
+
+**このリポジトリには自動収集は入っていない。** 実行環境の
+[ネットワークポリシー](https://code.claude.com/docs/en/claude-code-on-the-web)
+が x.com・cardrush-pokemon.jp・yuyu-tei.jp・snkrdunk.com を含む
+カード関連サイトを全て遮断しているため、現状の取り込み口は `add` の手入力だけ。
+
+とくに**買取表の画像は読めない**。画像は取得も OCR もできず、
+Web 検索が返すのはツイートの本文テキストのみ。
 
 ## 計算モデル
 
