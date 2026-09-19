@@ -21,7 +21,7 @@ import random
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from .model import Game, League, champion, contenders, pct
+from .model import Game, League, champion, contenders
 from .strength import Posterior, logistic
 
 WIN, LOSS, TIE = 0, 1, 2
@@ -53,7 +53,8 @@ class Result:
     entering: float
     splits: list[GameSplit]
     champ_by_wins: dict[int, tuple[float, float]]  # 残り勝ち数 -> (その勝ち数になる確率, 優勝確率)
-    clinch_by_date: list[tuple[str, float]]  # 日付 -> その日までに優勝が確定している確率
+    clinch_by_date: list[tuple[str, float]]  # 日付 -> その日までに注目チームの優勝が確定している確率
+    decided_by_date: list[tuple[str, dict[str, float]]]  # 日付 -> {優勝チーム: その日に決着する確率}
     final_wins: dict[int, float] = field(default_factory=dict)
 
     def stderr(self, p: float) -> float:
@@ -102,6 +103,7 @@ def simulate(
     wins_n: dict[int, int] = defaultdict(int)
     wins_champ: dict[int, int] = defaultdict(int)
     clinch_n = [0] * len(dates)
+    decided_n: list[dict[str, int]] = [defaultdict(int) for _ in dates]
     date_index = {d: i for i, d in enumerate(dates)}
     trials = 0
 
@@ -166,7 +168,7 @@ def simulate(
 
                 # その日の最終試合を終えた時点で、優勝が数学的に確定したかを見る。
                 if track_clinch and clinched_at is None and (gi + 1 == len(games) or games[gi + 1].date != g.date):
-                    if _clinched(focus, rec, left, h2h, alive):
+                    if _decided(rec, left, h2h):
                         clinched_at = date_index[g.date]
 
             finals = {tid: tuple(rec[tid]) for tid in alive}
@@ -180,8 +182,13 @@ def simulate(
             wins_n[focus_wins] += 1
             if won:
                 wins_champ[focus_wins] += 1
-            if won and clinched_at is not None:
-                clinch_n[clinched_at] += 1
+            # 最終戦を終えても確定しないのは、勝率が並んで対戦成績で決まるケース。
+            # それも「最終日に決着」として数える。
+            if track_clinch:
+                day = len(dates) - 1 if clinched_at is None else clinched_at
+                decided_n[day][champ] += 1
+                if won:
+                    clinch_n[day] += 1
 
     champion_prob = {tid: champ_count[tid] / trials for tid in alive}
     splits = []
@@ -204,9 +211,11 @@ def simulate(
     }
     cum = 0
     clinch_by_date = []
+    decided_by_date = []
     for i, d in enumerate(dates):
         cum += clinch_n[i]
         clinch_by_date.append((d, cum / trials))
+        decided_by_date.append((d, {tid: n / trials for tid, n in sorted(decided_n[i].items())}))
 
     return Result(
         trials=trials,
@@ -216,30 +225,40 @@ def simulate(
         splits=splits,
         champ_by_wins=champ_by_wins,
         clinch_by_date=clinch_by_date,
+        decided_by_date=decided_by_date,
         final_wins={w: n / trials for w, n in sorted(wins_n.items())},
     )
 
 
-def _clinched(
-    focus: str,
+def _can_still_win(
+    tid: str,
     rec: dict[str, list[int]],
     left: dict[str, int],
     h2h: dict[tuple[str, str], tuple[int, int, int]],
-    alive: tuple[str, ...],
 ) -> bool:
-    """focus の優勝が数学的に確定したか（残りを全敗しても1位か）。
+    """tid にまだ1位の目があるか。
 
-    同率決着まで含めると当該球団間の対戦成績の行方に依存するので、ここでは
-    「勝率でも勝利数でも上回る」ことを確定の条件にする（＝わずかに保守的。
-    同率で並ぶきわどいケースを確定扱いしない）。マジック消滅の定義と一致する。
+    「tid が残り全勝したときの最高勝率」対「相手が残り全敗したときの最低勝率」を
+    順位決定規定（勝率 → 勝利数 → 当該球団間の対戦成績）で突き合わせる。
+    同率で並んだ場合に対戦成績でどちらが上かまで見るので、マジック計算より
+    1日早く決着が確定することがある。
     """
-    fw, fl, ft = rec[focus]
-    floor_pct = pct(fw, fl + left[focus])
-    for tid in alive:
-        if tid == focus:
+    w, l, t = rec[tid]
+    ceiling = (w + left[tid], l, t)
+    for other in rec:
+        if other == tid:
             continue
-        rw, rl, _rt = rec[tid]
-        ceiling_pct = pct(rw + left[tid], rl)
-        if floor_pct < ceiling_pct or (floor_pct == ceiling_pct and fw <= rw + left[tid]):
+        ow, ol, ot = rec[other]
+        floor = (ow, ol + left[other], ot)
+        if champion({tid: ceiling, other: floor}, h2h) != tid:
             return False
     return True
+
+
+def _decided(
+    rec: dict[str, list[int]],
+    left: dict[str, int],
+    h2h: dict[tuple[str, str], tuple[int, int, int]],
+) -> bool:
+    """優勝チームが1つに絞られたか。"""
+    return sum(_can_still_win(tid, rec, left, h2h) for tid in rec) == 1

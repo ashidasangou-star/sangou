@@ -64,12 +64,20 @@ def _report(league: League, res: Result, out) -> None:
         print(f"   {w:2d}勝     {p_w * 100:5.1f}%        {p_champ * 100:6.1f}%  {bar}", file=out)
     print(file=out)
 
-    print(f"■ 優勝が数学的に確定する日（{focus.name}が優勝する場合の内訳ではなく全体に対する割合）", file=out)
-    prev = 0.0
-    for date, cum in res.clinch_by_date:
-        if cum - prev > 0.0005 or cum >= res.entering - 1e-9:
-            print(f"   {date} までに確定  {cum * 100:5.1f}%", file=out)
-        prev = cum
+    print("■ 優勝が決まる日", file=out)
+    print("   日付          その日に決着   そこまでに決着 │ 内訳（その日に優勝が決まるチーム）", file=out)
+    cum = 0.0
+    for (date, by_champ), (_d, focus_cum) in zip(res.decided_by_date, res.clinch_by_date):
+        today = sum(by_champ.values())
+        cum += today
+        if today < 0.0005:
+            continue
+        breakdown = "  ".join(
+            f"{league.team(tid).name} {p * 100:5.2f}%" for tid, p in sorted(by_champ.items(), key=lambda kv: -kv[1])
+        )
+        print(f"   {date}    {today * 100:6.2f}%       {cum * 100:6.2f}%   │ {breakdown}", file=out)
+    print(f"   ※ {focus.name}の優勝が確定する日で見ると、最終日までの累計は {res.clinch_by_date[-1][1] * 100:.1f}%"
+          f"（= {focus.name}の優勝確率）。", file=out)
     print(file=out)
 
 
