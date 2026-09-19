@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -84,21 +85,27 @@ def test_contenders_eliminates_teams_that_cannot_reach_the_leaders_floor():
 
 
 def test_apply_results_updates_both_teams_and_schedule():
+    # データは日々更新されるので、相手は日程から引いて検証する。
     league = load_league(CENTRAL)
+    first, second = league.games_of("T")[:2]
+    opp1 = first.away if first.home == "T" else first.home
+    opp2 = second.away if second.home == "T" else second.home
     updated = apply_results(league, "WL")
-    assert (updated.team("T").w, updated.team("T").l) == (72, 58)
-    # 1戦目の相手は広島、2戦目はDeNA。
-    assert updated.team("C").l == league.team("C").l + 1
-    assert updated.team("DB").w == league.team("DB").w + 1
+    assert (updated.team("T").w, updated.team("T").l) == (league.team("T").w + 1, league.team("T").l + 1)
+    assert updated.team(opp1).l == league.team(opp1).l + 1
+    assert updated.team(opp2).w == league.team(opp2).w + 1
     assert len(updated.remaining) == len(league.remaining) - 2
     assert updated.remaining_count("T") == league.remaining_count("T") - 2
 
 
 def test_apply_results_updates_head_to_head_for_direct_games():
     league = load_league(CENTRAL)
-    # 10/1の巨人戦は阪神の11試合目。そこまでの10試合を引き分けにして到達させる。
-    updated = apply_results(league, "TTTTTTTTTT" + "L")
-    assert updated.h2h("T", "G") == (16, 9, 0)
+    # 直接対決までを引き分けで消化してから、その1戦を落とす。
+    games = league.games_of("T")
+    idx = next(i for i, g in enumerate(games) if g.involves("G"))
+    w, l, t = league.h2h("T", "G")
+    updated = apply_results(league, "T" * idx + "L")
+    assert updated.h2h("T", "G") == (w, l + 1, t)
 
 
 def test_apply_results_rejects_too_many_games():
@@ -166,7 +173,10 @@ def test_already_clinched_state_gives_certainty():
 
 def test_data_file_is_well_formed_json():
     raw = json.loads(CENTRAL.read_text(encoding="utf-8"))
-    assert raw["as_of"] == "2026-09-18"
+    # 日々更新するスナップショットなので、日付は形だけ見る。
+    assert re.fullmatch(r"2026-\d{2}-\d{2}", raw["as_of"])
     # 出典の区別を必ず持たせる（確定値と推定値を混ぜない）。
     for team in raw["teams"]:
         assert team["source"] in {"confirmed", "derived", "estimated"}
+    for game in raw["remaining"]:
+        assert game["source"] in {"confirmed", "opponent_confirmed", "derived", "estimated"}
