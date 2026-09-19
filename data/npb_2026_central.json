@@ -1,0 +1,59 @@
+{
+  "league": "セントラル・リーグ",
+  "season": 2026,
+  "as_of": "2026-09-18",
+  "games_per_season": 143,
+  "interleague_games_per_team": 18,
+  "note": "2026年9月18日終了時点。source=confirmed は報道・公式順位表で確認できた数字、source=derived はゲーム差から一意に定まる数字、source=estimated は推定値（優勝争いには実質影響しないが、対戦相手の強さ推定に使う）。",
+  "teams": [
+    {"id": "T",  "name": "阪神",    "w": 71, "l": 57, "t": 1, "source": "confirmed"},
+    {"id": "G",  "name": "巨人",    "w": 71, "l": 59, "t": 2, "source": "confirmed"},
+    {"id": "DB", "name": "DeNA",    "w": 65, "l": 64, "t": 3, "source": "derived"},
+    {"id": "S",  "name": "ヤクルト", "w": 57, "l": 71, "t": 3, "source": "estimated"},
+    {"id": "D",  "name": "中日",    "w": 56, "l": 76, "t": 2, "source": "estimated"},
+    {"id": "C",  "name": "広島",    "w": 54, "l": 73, "t": 1, "source": "estimated"}
+  ],
+  "interleague": {"cl_w": 39, "cl_l": 65, "cl_t": 4, "source": "confirmed"},
+  "head_to_head": [
+    {"a": "T", "b": "G",  "w": 16, "l": 8, "t": 0, "source": "confirmed"},
+    {"a": "T", "b": "DB", "w": 13, "l": 10, "t": 0, "source": "estimated"},
+    {"a": "G", "b": "DB", "w": 12, "l": 11, "t": 0, "source": "estimated"}
+  ],
+  "tie_rate": 0.015,
+  "home_advantage_logit": 0.14,
+  "remaining": [
+    {"date": "2026-09-19", "home": "T",  "away": "C",  "source": "confirmed"},
+    {"date": "2026-09-20", "home": "T",  "away": "DB", "source": "confirmed"},
+    {"date": "2026-09-21", "home": "T",  "away": "DB", "source": "confirmed"},
+    {"date": "2026-09-23", "home": "S",  "away": "T",  "source": "estimated"},
+    {"date": "2026-09-24", "home": "S",  "away": "T",  "source": "estimated"},
+    {"date": "2026-09-25", "home": "D",  "away": "T",  "source": "estimated"},
+    {"date": "2026-09-26", "home": "D",  "away": "T",  "source": "estimated"},
+    {"date": "2026-09-27", "home": "D",  "away": "T",  "source": "estimated"},
+    {"date": "2026-09-29", "home": "C",  "away": "T",  "source": "estimated"},
+    {"date": "2026-09-30", "home": "C",  "away": "T",  "source": "estimated"},
+    {"date": "2026-10-01", "home": "T",  "away": "G",  "source": "confirmed"},
+    {"date": "2026-10-02", "home": "T",  "away": "S",  "source": "estimated"},
+    {"date": "2026-10-03", "home": "T",  "away": "S",  "source": "estimated"},
+    {"date": "2026-10-04", "home": "T",  "away": "D",  "source": "estimated"},
+
+    {"date": "2026-09-19", "home": "G",  "away": "D",  "source": "estimated"},
+    {"date": "2026-09-20", "home": "G",  "away": "D",  "source": "estimated"},
+    {"date": "2026-09-22", "home": "C",  "away": "G",  "source": "estimated"},
+    {"date": "2026-09-23", "home": "C",  "away": "G",  "source": "estimated"},
+    {"date": "2026-09-25", "home": "DB", "away": "G",  "source": "estimated"},
+    {"date": "2026-09-26", "home": "DB", "away": "G",  "source": "estimated"},
+    {"date": "2026-09-29", "home": "G",  "away": "S",  "source": "estimated"},
+    {"date": "2026-09-30", "home": "G",  "away": "S",  "source": "estimated"},
+    {"date": "2026-10-02", "home": "G",  "away": "C",  "source": "estimated"},
+    {"date": "2026-10-03", "home": "G",  "away": "D",  "source": "estimated"},
+
+    {"date": "2026-09-22", "home": "DB", "away": "S",  "source": "estimated"},
+    {"date": "2026-09-23", "home": "DB", "away": "C",  "source": "estimated"},
+    {"date": "2026-09-27", "home": "S",  "away": "DB", "source": "estimated"},
+    {"date": "2026-09-29", "home": "D",  "away": "DB", "source": "estimated"},
+    {"date": "2026-09-30", "home": "D",  "away": "DB", "source": "estimated"},
+    {"date": "2026-10-02", "home": "DB", "away": "C",  "source": "estimated"},
+    {"date": "2026-10-03", "home": "DB", "away": "S",  "source": "estimated"}
+  ]
+}
