@@ -1,0 +1,15 @@
+{
+  "_comment": "LivePocket 申込フォームのセレクタ。主催者ごとに項目が違うので、実際の申込ページを見て較正する。ここを空のままにすると lpwatch/local/apply.py の DEFAULT_SELECTORS が使われる。",
+
+  "_calibration": "較正手順: py -m lpwatch local run （dry-runで動く）を実行し、証跡として保存された HTML を見て、各ステップのセレクタを実際のものに直す。証跡は %LOCALAPPDATA%\\lpwatch\\evidence\\ に出る。",
+
+  "_steps": {
+    "entry_button": "申込ページで最初に押すボタン",
+    "quantity_select": "枚数の選択。無い公演もある",
+    "agree_checkbox": "規約同意。無い公演もある",
+    "confirm_button": "確認画面へ進む",
+    "submit_button": "最終送信。ここを押すと申込が確定する",
+    "done_marker": "申込完了の目印",
+    "closed_marker": "受付終了・完売の目印"
+  }
+}

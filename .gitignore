@@ -1,3 +1,12 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# lpwatch: ログイン状態に関わるものは絶対にリポジトリへ入れない。
+# ブラウザプロファイルと証跡は %LOCALAPPDATA%\lpwatch\ に置くので本来ここには
+# 来ないが、置き場所を変えたときの事故を防ぐために名前で弾いておく。
+profiles/
+evidence/
+*.cookies.json
+storage_state.json
+.env

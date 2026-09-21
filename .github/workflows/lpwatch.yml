@@ -1,0 +1,71 @@
+# 抽選受付の監視。ログインが不要な処理だけをここで回す。
+#
+# X と LivePocket のログインセッションはこのワークフローに持ち込まない。
+# Actions のランナーはクラウド上でIPが毎回変わるため、セッションを
+# 持ち込むと追加認証が発生し、アカウントがロックされる。
+#
+# 時刻の正確さをこのワークフローに期待しないこと。schedule は高負荷時に
+# 遅延し、負荷次第では破棄される。時刻が重要な処理（先着受付への張り付き）
+# は Windows 側のタスクスケジューラが持つ。
+#
+# なお public リポジトリでは60日間コミットが無いと schedule が自動停止する。
+# このワークフローは検知のたびにコミットするので、動いている限り止まらない。
+
+name: lpwatch
+
+on:
+  schedule:
+    # UTC で指定する。JST 09:00 / 15:00 / 21:00 に相当。
+    # 毎時00分は Actions の混雑帯なので 10 分ずらしてある。
+    - cron: "10 0,6,12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # 前の回が長引いているところに次が重なると、同じ JSONL に
+  # 二重追記した状態で push が競合する。直列に流す。
+  group: lpwatch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 依存ライブラリはない。Actions 側は標準ライブラリだけで動く。
+      # Playwright は lpwatch/local/ でしか使わず、そこは import しない。
+      - name: 受付情報を取り直す
+        run: python -m lpwatch refresh
+
+      - name: 通知
+        env:
+          LPWATCH_WEBHOOK: ${{ secrets.LPWATCH_WEBHOOK }}
+        run: |
+          if [ -n "$LPWATCH_WEBHOOK" ]; then
+            python -m lpwatch notify --webhook "$LPWATCH_WEBHOOK"
+          else
+            python -m lpwatch notify --dry-run
+          fi
+
+      - name: 記録をコミットする
+        run: |
+          # events.jsonl は Actions が、marks.jsonl は Windows が書く。
+          # 書き込み担当を分けてあるので、この2者が競合しない。
+          if git diff --quiet -- data/lpwatch/events.jsonl; then
+            echo "新しい情報なし"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/lpwatch/events.jsonl
+          git commit -m "lpwatch: 受付情報を更新"
+          # Windows 側が marks.jsonl を push している可能性がある。
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -68,11 +68,73 @@ LivePocket 本体から締切を取り直す、という順序が普通に起き
 
 先着受付は加えて開始15分前に鳴らす。抽選では鳴らさない。
 
+## 実行環境の分担
+
+ログインが要る処理は自宅 Windows PC、要らない処理は GitHub Actions。
+**X と LivePocket のセッションを Actions に持ち込まない。**
+
+```
+GitHub Actions (lpwatch refresh / notify)
+   └─ 公開ページのみ。events.jsonl を更新してコミット
+        ↓  git
+Windows PC (scripts/windows/lpwatch-poll.ps1)
+   └─ git pull → local check → local run → marks.jsonl を push
+```
+
+トリガーは **プル型**。Actions から押し込むのではなく Windows が取りに行く。
+自宅PCは NAT の内側で、受信口を作るとポート開放と動的DNSが要って脆い。
+
+書き込み担当を分けてあるので、両者が同じファイルに追記せず競合しない。
+
+| ファイル | 書く側 |
+| --- | --- |
+| `data/lpwatch/events.jsonl` | Actions（観測した事実） |
+| `data/lpwatch/marks.jsonl` | Windows（自分の行動） |
+
+### 時刻は Windows が持つ
+
+GitHub Actions の `schedule` は時刻を保証しない。高負荷時（毎時00分付近）は
+遅延し、負荷次第で破棄される。先着受付への張り付きを Actions から
+トリガーすると間に合わない。
+
+先着は `opens_at` が判明した時点で、Windows 側が開始5分前に
+スリープ解除タイマーを登録する（`schedule-wakes.ps1`）。
+
+### 常時起動は不要
+
+- 抽選 … 締切が数日先。1日2回の定期ポーリングで足りる
+- 先着 … 開始時刻に one-shot の起床タイマーを仕掛ける
+
+ただし **スリープ (S3) からは復帰できるが、シャットダウン (S5) からは
+復帰しない**。電源オプションのスリープ解除タイマー有効化は
+`register-tasks.ps1` が行う。
+
+### セッションの持ち方
+
+Playwright の永続プロファイルを `%LOCALAPPDATA%\lpwatch\profiles\` に置く。
+**リポジトリ外**。証跡のスクリーンショットも同様（氏名・住所・決済手段が写る）。
+
+- ヘッドレスで動かさない
+- **自動再ログインしない。** 切れたら人に通知して止める
+- パスワードはどこにも保存しない
+
+## Windows セットアップ
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\windows\register-tasks.ps1 -Repo C:\src\sangou
+py -m pip install playwright
+py -m playwright install chromium
+py -m lpwatch local login x
+py -m lpwatch local login livepocket
+py -m lpwatch local run          # dry-run。セレクタの較正を確認
+```
+
+`data/lpwatch/targets.json` に書いた受付にしか申し込まない。空なら何もしない。
+
 ## まだ無いもの
 
-- `collect/livepocket.py` — 公開ページのポーリング。Actions で回す側
 - `collect/twitter.py` — browser-use による X 検索。ローカルで回す側
-- 申込の自動化
+- `apply.py` のセレクタ較正（実ページを見ないと確定できない）
 
 ### 申込の自動化について決めてあること
 
