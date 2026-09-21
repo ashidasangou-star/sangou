@@ -55,6 +55,23 @@ def _report(league: League, res: Result, out) -> None:
     print("   ※「勝てば」はその試合に勝った場合の優勝確率。他の試合の結果は平均して均している。", file=out)
     print(file=out)
 
+    print(f"■ {focus.name}の各試合が「優勝決定戦」になる確率", file=out)
+    print("   その試合を迎えた時点で優勝が未決着で、かつその試合の結果しだいで優勝が決まる状態。", file=out)
+    print("   日付        相手      決定戦   │ 勝てば決まる  分けでも決まる  負ければ相手V │ 実際に決まる", file=out)
+    settled_total = 0.0
+    for sp in res.splits:
+        settled_total += sp.settled
+        print(
+            f"   {sp.date}  {sp.opponent:<6s} {sp.decider * 100:6.2f}%  │"
+            f"  {sp.clinch_if_win * 100:7.2f}%      {sp.clinch_if_draw * 100:7.2f}%      {sp.eliminated_if_loss * 100:7.2f}%"
+            f" │  {sp.settled * 100:6.2f}%",
+            file=out,
+        )
+    print(f"   合計（{focus.name}の試合で優勝が決まる確率）{settled_total * 100:29.2f}%", file=out)
+    print("   ※「決定戦」は1シーズンに何度も訪れうる（決めそこねれば次の試合もまた決定戦）。", file=out)
+    print("     足し算で意味があるのは右端の「実際に決まる」列だけ。", file=out)
+    print(file=out)
+
     print(f"■ {focus.name}が残り何勝すれば優勝できるか", file=out)
     print("   勝数   そうなる確率   そのときの優勝確率", file=out)
     for w, (p_w, p_champ) in res.champ_by_wins.items():

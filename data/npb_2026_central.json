@@ -1,7 +1,7 @@
 {
   "league": "セントラル・リーグ",
   "season": 2026,
-  "as_of": "2026-09-19",
+  "as_of": "2026-09-20",
   "games_per_season": 143,
   "interleague_games_per_team": 18,
   "note": "2026年9月18日終了時点。source=confirmed は公式・報道で確認できた数字、opponent_confirmed は回戦番号から対戦相手と試合数が確定していて日付と球場だけ推定、derived はゲーム差から一意に定まる数字、estimated は推定値。",
@@ -9,7 +9,7 @@
     {
       "id": "T",
       "name": "阪神",
-      "w": 71,
+      "w": 72,
       "l": 58,
       "t": 1,
       "source": "confirmed"
@@ -17,7 +17,7 @@
     {
       "id": "G",
       "name": "巨人",
-      "w": 72,
+      "w": 73,
       "l": 59,
       "t": 2,
       "source": "confirmed"
@@ -26,7 +26,7 @@
       "id": "DB",
       "name": "DeNA",
       "w": 66,
-      "l": 64,
+      "l": 65,
       "t": 3,
       "source": "derived"
     },
@@ -34,14 +34,14 @@
       "id": "S",
       "name": "ヤクルト",
       "w": 57,
-      "l": 72,
+      "l": 73,
       "t": 3,
       "source": "estimated"
     },
     {
       "id": "D",
       "name": "中日",
-      "w": 56,
+      "w": 57,
       "l": 77,
       "t": 2,
       "source": "estimated"
@@ -50,7 +50,7 @@
       "id": "C",
       "name": "広島",
       "w": 55,
-      "l": 73,
+      "l": 74,
       "t": 1,
       "source": "estimated"
     }
@@ -90,12 +90,6 @@
   "tie_rate": 0.015,
   "home_advantage_logit": 0.14,
   "remaining": [
-    {
-      "date": "2026-09-20",
-      "home": "T",
-      "away": "DB",
-      "source": "confirmed"
-    },
     {
       "date": "2026-09-21",
       "home": "T",
@@ -167,12 +161,6 @@
       "home": "T",
       "away": "DB",
       "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-09-20",
-      "home": "G",
-      "away": "C",
-      "source": "estimated"
     },
     {
       "date": "2026-09-22",

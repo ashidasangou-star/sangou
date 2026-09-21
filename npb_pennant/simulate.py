@@ -38,6 +38,11 @@ class GameSplit:
     home: bool
     prob: dict[int, float]  # 結果 -> その結果になる確率
     champ_given: dict[int, float]  # 結果 -> その結果のときの優勝確率
+    decider: float = 0.0  # この試合が優勝決定戦になる確率（結果しだいで優勝の行方が決まる）
+    settled: float = 0.0  # 実際にこの試合で優勝が決まる確率
+    clinch_if_win: float = 0.0  # 勝てばその日に優勝が確定する確率
+    clinch_if_draw: float = 0.0  # 引き分けでもその日に優勝が確定する確率
+    eliminated_if_loss: float = 0.0  # 負ければその日に他球団の優勝が確定する確率
 
     @property
     def swing(self) -> float:
@@ -104,6 +109,11 @@ def simulate(
     wins_champ: dict[int, int] = defaultdict(int)
     clinch_n = [0] * len(dates)
     decided_n: list[dict[str, int]] = [defaultdict(int) for _ in dates]
+    decider_n = [0] * len(focus_games)
+    settled_n = [0] * len(focus_games)
+    clinch_win_n = [0] * len(focus_games)
+    clinch_draw_n = [0] * len(focus_games)
+    elim_loss_n = [0] * len(focus_games)
     date_index = {d: i for i, d in enumerate(dates)}
     trials = 0
 
@@ -120,6 +130,7 @@ def simulate(
             outcomes = [0] * len(focus_games)
             clinched_at = None
             focus_wins = 0
+            day_focus_game: tuple[int, str, int] | None = None
 
             for gi, g in enumerate(games):
                 r = rng.random()
@@ -165,10 +176,38 @@ def simulate(
                         outcomes[k] = TIE
                     else:
                         outcomes[k] = LOSS
+                    day_focus_game = (k, g.away if g.home == focus else g.home, outcomes[k])
 
                 # その日の最終試合を終えた時点で、優勝が数学的に確定したかを見る。
-                if track_clinch and clinched_at is None and (gi + 1 == len(games) or games[gi + 1].date != g.date):
-                    if _decided(rec, left, h2h):
+                if track_clinch and (gi + 1 == len(games) or games[gi + 1].date != g.date):
+                    if clinched_at is None and day_focus_game is not None:
+                        # この日を迎えた時点では未決着。注目チームの結果を差し替えて、
+                        # 「勝っていたら／引き分けていたら／負けていたら」その日に決着したかを見る。
+                        k, opp, actual = day_focus_game
+                        champ_if = {}
+                        for alt in (WIN, TIE, LOSS):
+                            if alt == actual:
+                                alt_rec, alt_h2h = rec, h2h
+                            else:
+                                alt_rec = {t: list(v) for t, v in rec.items()}
+                                alt_h2h = dict(h2h)
+                                _swap(alt_rec, alt_h2h, focus, opp, actual, alt)
+                            champ_if[alt] = _decided_champion(alt_rec, left, alt_h2h)
+                        # その試合の結果が、決着するか・誰が優勝するかを左右した場合だけ
+                        # 「決定戦」と数える（巨人の結果だけで決まる日は含めない）。
+                        matters = len(set(champ_if.values())) > 1
+                        if matters:
+                            decider_n[k] += 1
+                            if champ_if[WIN] == focus:
+                                clinch_win_n[k] += 1
+                            if champ_if[TIE] == focus:
+                                clinch_draw_n[k] += 1
+                            if champ_if[LOSS] is not None and champ_if[LOSS] != focus:
+                                elim_loss_n[k] += 1
+                            if champ_if[actual] is not None:
+                                settled_n[k] += 1
+                    day_focus_game = None
+                    if clinched_at is None and _decided(rec, left, h2h):
                         clinched_at = date_index[g.date]
 
             finals = {tid: tuple(rec[tid]) for tid in alive}
@@ -204,6 +243,11 @@ def simulate(
                 champ_given={
                     o: (split_champ[k][o] / split_n[k][o] if split_n[k][o] else 0.0) for o in (WIN, LOSS, TIE)
                 },
+                decider=decider_n[k] / trials,
+                settled=settled_n[k] / trials,
+                clinch_if_win=clinch_win_n[k] / trials,
+                clinch_if_draw=clinch_draw_n[k] / trials,
+                eliminated_if_loss=elim_loss_n[k] / trials,
             )
         )
     champ_by_wins = {
@@ -228,6 +272,32 @@ def simulate(
         decided_by_date=decided_by_date,
         final_wins={w: n / trials for w, n in sorted(wins_n.items())},
     )
+
+
+def _swap(
+    rec: dict[str, list[int]],
+    h2h: dict[tuple[str, str], tuple[int, int, int]],
+    focus: str,
+    opp: str,
+    old: int,
+    new: int,
+) -> None:
+    """注目チームの1試合の結果を old から new に差し替える（相手と対戦成績も直す）。"""
+    delta = {WIN: (1, 0, 0), LOSS: (0, 1, 0), TIE: (0, 0, 1)}
+    for sign, res in ((-1, old), (+1, new)):
+        dw, dl, dt = delta[res]
+        if focus in rec:
+            rec[focus][0] += sign * dw
+            rec[focus][1] += sign * dl
+            rec[focus][2] += sign * dt
+        if opp in rec:
+            rec[opp][0] += sign * dl
+            rec[opp][1] += sign * dw
+            rec[opp][2] += sign * dt
+        if (focus, opp) in h2h:
+            w, l, t = h2h[(focus, opp)]
+            h2h[(focus, opp)] = (w + sign * dw, l + sign * dl, t + sign * dt)
+            h2h[(opp, focus)] = (l + sign * dl, w + sign * dw, t + sign * dt)
 
 
 def _can_still_win(
@@ -255,10 +325,20 @@ def _can_still_win(
     return True
 
 
+def _decided_champion(
+    rec: dict[str, list[int]],
+    left: dict[str, int],
+    h2h: dict[tuple[str, str], tuple[int, int, int]],
+) -> str | None:
+    """優勝チームが1つに絞られていればそのID、まだ決まっていなければ None。"""
+    alive = [tid for tid in rec if _can_still_win(tid, rec, left, h2h)]
+    return alive[0] if len(alive) == 1 else None
+
+
 def _decided(
     rec: dict[str, list[int]],
     left: dict[str, int],
     h2h: dict[tuple[str, str], tuple[int, int, int]],
 ) -> bool:
     """優勝チームが1つに絞られたか。"""
-    return sum(_can_still_win(tid, rec, left, h2h) for tid in rec) == 1
+    return _decided_champion(rec, left, h2h) is not None

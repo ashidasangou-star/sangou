@@ -77,11 +77,15 @@ def test_contenders_eliminates_teams_that_cannot_reach_the_leaders_floor():
     league = load_league(CENTRAL)
     alive = contenders(league)
     assert set(alive) == {"T", "G", "DB"}
-    # 阪神が全敗しても .500。ヤクルトは全勝しても .500 に届かない。
-    hanshin = league.team("T")
-    assert min_possible_pct(hanshin, league.remaining_count("T")) == pytest.approx(0.5)
-    swallows = league.team("S")
-    assert max_possible_pct(swallows, league.remaining_count("S")) < 0.5
+    # 脱落したチームは、全勝しても首位の「全敗ライン」に届かない。
+    best_floor = max(min_possible_pct(t, league.remaining_count(t.id)) for t in league.teams)
+    for tid in ("S", "D", "C"):
+        team = league.team(tid)
+        assert max_possible_pct(team, league.remaining_count(tid)) < best_floor
+    # 生き残っているチームは届く。
+    for tid in alive:
+        team = league.team(tid)
+        assert max_possible_pct(team, league.remaining_count(tid)) >= best_floor
 
 
 def test_apply_results_updates_both_teams_and_schedule():
@@ -180,3 +184,22 @@ def test_data_file_is_well_formed_json():
         assert team["source"] in {"confirmed", "derived", "estimated"}
     for game in raw["remaining"]:
         assert game["source"] in {"confirmed", "opponent_confirmed", "derived", "estimated"}
+
+
+def test_decider_probabilities_are_consistent():
+    league = load_league(CENTRAL)
+    post = fit(league, draws=600, burn_in=2000, thin=3, seed=5)
+    res = simulate(league, post, focus="T", trials_per_draw=8, seed=6)
+    for sp in res.splits:
+        # 「実際に決まる」は「決定戦になる」の部分集合。
+        assert sp.settled <= sp.decider + 1e-9
+        # 勝ったときに決まるケースは、決定戦のうちの一部。
+        assert sp.clinch_if_win <= sp.decider + 1e-9
+        assert sp.eliminated_if_loss <= sp.decider + 1e-9
+    # どこかの試合で決まる確率は1を超えない（排反なので）。
+    assert sum(sp.settled for sp in res.splits) <= 1.0
+    # 最終戦は、決定戦になったなら必ずその試合で決着する。
+    last = res.splits[-1]
+    assert last.settled == pytest.approx(last.decider, abs=0.01)
+    # 序盤の試合では決着しえない。
+    assert res.splits[0].decider == 0.0
