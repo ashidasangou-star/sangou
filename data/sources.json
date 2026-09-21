@@ -1,0 +1,33 @@
+{
+  "_comment": "BOX買取価格の情報源。primary が本命、fallback は primary が使えないときの代替。",
+
+  "primary": {
+    "name": "ポケカ買取チェッカー",
+    "url": "https://pokeca-box-hikaku.com/",
+    "box_page_pattern": "https://pokeca-box-hikaku.com/box/<slug>.html",
+    "description": "未開封BOX 67商品 × 9〜10店舗の買取価格を毎日3回(11:00/15:00/18:00 JST)自動収集し、最高値を比較できる個人運営サイト。BOXごとに1ヶ月/3ヶ月/全期間の推移グラフあり。",
+    "shops": [
+      "森森買取",
+      "買取ホムラ",
+      "買取一丁目",
+      "ラントゥ買取",
+      "海峡通信",
+      "オク",
+      "ルデヤ"
+    ],
+    "update_times_jst": ["11:00", "15:00", "18:00"],
+    "known_slugs": {
+      "ニンジャスピナー": "ninja-spinner",
+      "MEGAドリームex": "mega-ex"
+    },
+    "status": "blocked",
+    "status_note": "実行環境のネットワークポリシーが 403 で遮断している（CONNECT tunnel failed）。Web検索経由なら断片的に読めるが、値が1か月古かったり価格が返らないセットがあり、日次の系列の土台には使えない。ドメインが到達可能になれば collect を実装して全自動化できる。"
+  },
+
+  "fallback": {
+    "name": "トレカマサイ",
+    "x_account": "https://x.com/ttt_kaitori",
+    "description": "買取表を画像で投稿する。data/inbox/ に画像を置いてもらい読み取る方式。",
+    "status": "manual"
+  }
+}
