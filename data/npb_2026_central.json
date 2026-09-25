@@ -1,7 +1,7 @@
 {
   "league": "セントラル・リーグ",
   "season": 2026,
-  "as_of": "2026-09-21",
+  "as_of": "2026-09-25",
   "games_per_season": 143,
   "interleague_games_per_team": 18,
   "note": "2026年9月18日終了時点。source=confirmed は公式・報道で確認できた数字、opponent_confirmed は回戦番号から対戦相手と試合数が確定していて日付と球場だけ推定、derived はゲーム差から一意に定まる数字、estimated は推定値。",
@@ -9,23 +9,23 @@
     {
       "id": "T",
       "name": "阪神",
-      "w": 73,
-      "l": 58,
+      "w": 75,
+      "l": 59,
       "t": 1,
       "source": "confirmed"
     },
     {
       "id": "G",
       "name": "巨人",
-      "w": 73,
-      "l": 59,
+      "w": 74,
+      "l": 62,
       "t": 2,
       "source": "confirmed"
     },
     {
       "id": "DB",
       "name": "DeNA",
-      "w": 66,
+      "w": 69,
       "l": 66,
       "t": 3,
       "source": "derived"
@@ -33,8 +33,8 @@
     {
       "id": "S",
       "name": "ヤクルト",
-      "w": 57,
-      "l": 74,
+      "w": 59,
+      "l": 76,
       "t": 2,
       "source": "confirmed"
     },
@@ -42,15 +42,15 @@
       "id": "D",
       "name": "中日",
       "w": 59,
-      "l": 76,
+      "l": 79,
       "t": 2,
       "source": "confirmed"
     },
     {
       "id": "C",
       "name": "広島",
-      "w": 53,
-      "l": 74,
+      "w": 55,
+      "l": 75,
       "t": 4,
       "source": "confirmed"
     }
@@ -91,44 +91,26 @@
   "home_advantage_logit": 0.14,
   "remaining": [
     {
-      "date": "2026-09-23",
-      "home": "S",
-      "away": "T",
-      "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-09-24",
-      "home": "S",
-      "away": "T",
-      "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-09-25",
-      "home": "C",
-      "away": "T",
-      "source": "opponent_confirmed"
-    },
-    {
       "date": "2026-09-26",
-      "home": "C",
+      "home": "DB",
       "away": "T",
       "source": "opponent_confirmed"
     },
     {
       "date": "2026-09-27",
-      "home": "C",
+      "home": "DB",
       "away": "T",
       "source": "opponent_confirmed"
     },
     {
       "date": "2026-09-29",
-      "home": "DB",
+      "home": "C",
       "away": "T",
       "source": "opponent_confirmed"
     },
     {
       "date": "2026-09-30",
-      "home": "DB",
+      "home": "C",
       "away": "T",
       "source": "opponent_confirmed"
     },
@@ -141,7 +123,7 @@
     {
       "date": "2026-10-02",
       "home": "T",
-      "away": "S",
+      "away": "C",
       "source": "opponent_confirmed"
     },
     {
@@ -153,31 +135,13 @@
     {
       "date": "2026-10-04",
       "home": "T",
-      "away": "DB",
+      "away": "S",
       "source": "opponent_confirmed"
     },
     {
-      "date": "2026-09-22",
-      "home": "S",
-      "away": "G",
-      "source": "estimated"
-    },
-    {
-      "date": "2026-09-23",
-      "home": "S",
-      "away": "G",
-      "source": "estimated"
-    },
-    {
-      "date": "2026-09-25",
-      "home": "C",
-      "away": "G",
-      "source": "estimated"
-    },
-    {
       "date": "2026-09-26",
-      "home": "C",
-      "away": "G",
+      "home": "G",
+      "away": "S",
       "source": "estimated"
     },
     {
@@ -193,21 +157,9 @@
       "source": "estimated"
     },
     {
-      "date": "2026-10-02",
-      "home": "G",
-      "away": "DB",
-      "source": "estimated"
-    },
-    {
       "date": "2026-10-03",
       "home": "G",
       "away": "DB",
-      "source": "estimated"
-    },
-    {
-      "date": "2026-09-23",
-      "home": "DB",
-      "away": "C",
       "source": "estimated"
     }
   ]
