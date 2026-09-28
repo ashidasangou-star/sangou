@@ -1,15 +1,15 @@
 {
   "league": "セントラル・リーグ",
   "season": 2026,
-  "as_of": "2026-09-25",
+  "as_of": "2026-09-27",
   "games_per_season": 143,
   "interleague_games_per_team": 18,
-  "note": "2026年9月18日終了時点。source=confirmed は公式・報道で確認できた数字、opponent_confirmed は回戦番号から対戦相手と試合数が確定していて日付と球場だけ推定、derived はゲーム差から一意に定まる数字、estimated は推定値。",
+  "note": "2026年9月27日終了時点。残り日程はNPBの追加日程発表（10/4横浜でDeNA-阪神、10/6・10/7甲子園で阪神-広島、10/7が最終戦）と報道による。10/5の阪神-広島だけは推定（広島戦の残り3試合のうち日付を確認できなかった1試合）。",
   "teams": [
     {
       "id": "T",
       "name": "阪神",
-      "w": 75,
+      "w": 76,
       "l": 59,
       "t": 1,
       "source": "confirmed"
@@ -17,7 +17,7 @@
     {
       "id": "G",
       "name": "巨人",
-      "w": 74,
+      "w": 75,
       "l": 62,
       "t": 2,
       "source": "confirmed"
@@ -26,7 +26,7 @@
       "id": "DB",
       "name": "DeNA",
       "w": 69,
-      "l": 66,
+      "l": 68,
       "t": 3,
       "source": "derived"
     },
@@ -34,7 +34,7 @@
       "id": "S",
       "name": "ヤクルト",
       "w": 59,
-      "l": 76,
+      "l": 77,
       "t": 2,
       "source": "confirmed"
     },
@@ -49,7 +49,7 @@
     {
       "id": "C",
       "name": "広島",
-      "w": 55,
+      "w": 56,
       "l": 75,
       "t": 4,
       "source": "confirmed"
@@ -91,28 +91,16 @@
   "home_advantage_logit": 0.14,
   "remaining": [
     {
-      "date": "2026-09-26",
-      "home": "DB",
-      "away": "T",
-      "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-09-27",
-      "home": "DB",
-      "away": "T",
-      "source": "opponent_confirmed"
-    },
-    {
       "date": "2026-09-29",
-      "home": "C",
+      "home": "S",
       "away": "T",
-      "source": "opponent_confirmed"
+      "source": "confirmed"
     },
     {
       "date": "2026-09-30",
-      "home": "C",
+      "home": "S",
       "away": "T",
-      "source": "opponent_confirmed"
+      "source": "confirmed"
     },
     {
       "date": "2026-10-01",
@@ -121,46 +109,52 @@
       "source": "confirmed"
     },
     {
-      "date": "2026-10-02",
+      "date": "2026-10-04",
+      "home": "DB",
+      "away": "T",
+      "source": "confirmed"
+    },
+    {
+      "date": "2026-10-05",
       "home": "T",
       "away": "C",
-      "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-10-03",
-      "home": "T",
-      "away": "S",
-      "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-10-04",
-      "home": "T",
-      "away": "S",
-      "source": "opponent_confirmed"
-    },
-    {
-      "date": "2026-09-26",
-      "home": "G",
-      "away": "S",
       "source": "estimated"
+    },
+    {
+      "date": "2026-10-06",
+      "home": "T",
+      "away": "C",
+      "source": "confirmed"
+    },
+    {
+      "date": "2026-10-07",
+      "home": "T",
+      "away": "C",
+      "source": "confirmed"
     },
     {
       "date": "2026-09-29",
       "home": "G",
-      "away": "DB",
-      "source": "estimated"
+      "away": "C",
+      "source": "confirmed"
     },
     {
-      "date": "2026-09-30",
-      "home": "G",
-      "away": "DB",
-      "source": "estimated"
+      "date": "2026-10-02",
+      "home": "S",
+      "away": "G",
+      "source": "confirmed"
     },
     {
       "date": "2026-10-03",
       "home": "G",
       "away": "DB",
-      "source": "estimated"
+      "source": "confirmed"
+    },
+    {
+      "date": "2026-09-28",
+      "home": "DB",
+      "away": "C",
+      "source": "confirmed"
     }
   ]
 }

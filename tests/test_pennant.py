@@ -75,17 +75,14 @@ def test_champion_tiebreak_uses_wins_then_head_to_head():
 
 def test_contenders_eliminates_teams_that_cannot_reach_the_leaders_floor():
     league = load_league(CENTRAL)
-    alive = contenders(league)
-    assert set(alive) == {"T", "G", "DB"}
-    # 脱落したチームは、全勝しても首位の「全敗ライン」に届かない。
+    # 優勝争いの当事者は日々変わるので、規定どおりに判定できているかだけを見る。
+    alive = set(contenders(league))
+    assert {"T", "G"} <= alive  # 首位と2位は常に残っている
     best_floor = max(min_possible_pct(t, league.remaining_count(t.id)) for t in league.teams)
-    for tid in ("S", "D", "C"):
-        team = league.team(tid)
-        assert max_possible_pct(team, league.remaining_count(tid)) < best_floor
-    # 生き残っているチームは届く。
-    for tid in alive:
-        team = league.team(tid)
-        assert max_possible_pct(team, league.remaining_count(tid)) >= best_floor
+    for t in league.teams:
+        ceiling = max_possible_pct(t, league.remaining_count(t.id))
+        # 全勝しても首位の「全敗ライン」に届かないチームだけが脱落している。
+        assert (ceiling >= best_floor) == (t.id in alive)
 
 
 def test_apply_results_updates_both_teams_and_schedule():
@@ -145,8 +142,11 @@ def test_simulation_is_consistent_and_ordered():
     res = simulate(league, post, focus="T", trials_per_draw=6, seed=3)
     assert res.trials == 4800
     assert sum(res.champion_prob.values()) == pytest.approx(1.0)
-    # 首位で残り試合も多い阪神が本命。
-    assert res.champion_prob["T"] > res.champion_prob["G"] > res.champion_prob["DB"]
+    # 首位の阪神が本命で、2位の巨人がそれに次ぐ。
+    assert res.champion_prob["T"] > res.champion_prob["G"]
+    for tid, p in res.champion_prob.items():
+        if tid not in ("T", "G"):
+            assert p < res.champion_prob["G"]
     # どの試合も「勝ったほうが優勝確率が上がる」。
     for sp in res.splits:
         assert sp.champ_given[WIN] > sp.champ_given[LOSS]
